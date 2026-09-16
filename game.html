@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Rush — Yasmin's Creative Mini-Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #071421;
+            color: #fff;
+        }
+        .game-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 20px 60px;
+            text-align: center;
+        }
+        .game-card {
+            background: #f7f4ec;
+            color: #071421;
+            border-radius: 28px;
+            padding: 35px;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        .game-card h1 {
+            font-family: Bangers, cursive;
+            font-size: clamp(42px, 7vw, 68px);
+            color: #ff6a00;
+            line-height: 0.9;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+        .game-canvas-wrap {
+            position: relative;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 4 / 3;
+            background: #071421;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 3px solid #ff6a00;
+        }
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .game-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            font-weight: 800;
+            font-size: 16px;
+        }
+        .game-stats span {
+            color: #ff6a00;
+        }
+        .game-btn {
+            background: #ff6a00;
+            color: #fff;
+            border: 0;
+            padding: 12px 28px;
+            border-radius: 999px;
+            font-family: Bangers, cursive;
+            font-size: 24px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 8px 20px rgba(255, 106, 0, 0.4);
+        }
+        .game-btn:hover {
+            transform: scale(1.05);
+            background: #e55e00;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            color: #ff6a00;
+            font-weight: 800;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+        .back-link:hover {
+            transform: translateX(-4px);
+        }
+    </style>
+</head>
+<body>
+    <header class="nav-wrap">
+        <nav class="nav glass">
+            <a class="brand" href="index.html" aria-label="Yasmin — Home">
+                <img src="assets/logo.jpg" alt="Yasmin logo">
+                <span class="brand-initials">YS</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html#home">Home</a>
+                <a href="index.html#about">About</a>
+                <a href="projects.html">Projects</a>
+                <a href="index.html#skills">Skills</a>
+                <a href="index.html#contact">Contact</a>
+            </div>
+            <a class="pill-btn" href="index.html#contact">Let's Talk <span>→</span></a>
+            <button class="menu-btn" aria-label="Toggle navigation">☰</button>
+        </nav>
+    </header>
+
+    <main class="game-main">
+        <a href="index.html#about" class="back-link">← Back to Portfolio</a>
+        <div class="game-card">
+            <p class="eyebrow orange">CREATIVE ARCADE</p>
+            <h1>DESIGN RUSH ✦</h1>
+            <p style="color:#425b6d; margin-bottom:15px; font-size:15px;">Catch design spark assets & swatch drops before time runs out! Move your basket with cursor / touch / arrows.</p>
+            
+            <div class="game-stats">
+                <div>SCORE: <span id="scoreVal">0</span></div>
+                <div>TIME: <span id="timeVal">30</span>s</div>
+                <div>BEST: <span id="bestVal">0</span></div>
+            </div>
+
+            <div class="game-canvas-wrap">
+                <canvas id="gameCanvas" width="500" height="375"></canvas>
+            </div>
+
+            <button id="startBtn" class="game-btn">START GAME ✦</button>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('scoreVal');
+        const timeEl = document.getElementById('timeVal');
+        const bestEl = document.getElementById('bestVal');
+        const startBtn = document.getElementById('startBtn');
+
+        let score = 0;
+        let timeLeft = 30;
+        let gameRunning = false;
+        let timerInterval = null;
+        let bestScore = localStorage.getItem('yasmin_best_score') || 0;
+        bestEl.textContent = bestScore;
+
+        let player = { x: 220, y: 330, width: 65, height: 18, color: '#ff6a00' };
+        let items = [];
+        const itemColors = ['#ff6a00', '#0acf83', '#1abcfe', '#a259ff', '#f24e1e'];
+
+        function resetGame() {
+            score = 0;
+            timeLeft = 30;
+            items = [];
+            scoreEl.textContent = score;
+            timeEl.textContent = timeLeft;
+        }
+
+        function spawnItem() {
+            if (!gameRunning) return;
+            const size = Math.random() * 12 + 14;
+            items.push({
+                x: Math.random() * (canvas.width - 30) + 15,
+                y: -10,
+                radius: size,
+                speed: Math.random() * 2 + 2.5,
+                color: itemColors[Math.floor(Math.random() * itemColors.length)]
+            });
+        }
+
+        function update() {
+            if (!gameRunning) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw player basket
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.roundRect(player.x, player.y, player.width, player.height, [8]);
+            ctx.fill();
+
+            // Mascot emblem on player
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('✦', player.x + player.width / 2, player.y + 14);
+
+            // Update items
+            for (let i = items.length - 1; i >= 0; i--) {
+                const it = items[i];
+                it.y += it.speed;
+
+                ctx.fillStyle = it.color;
+                ctx.beginPath();
+                ctx.arc(it.x, it.y, it.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Sparkle inside
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `${it.radius}px sans-serif`;
+                ctx.fillText('✦', it.x, it.y + it.radius * 0.35);
+
+                // Collision detection
+                if (
+                    it.y + it.radius >= player.y &&
+                    it.y - it.radius <= player.y + player.height &&
+                    it.x >= player.x &&
+                    it.x <= player.x + player.width
+                ) {
+                    score += 10;
+                    scoreEl.textContent = score;
+                    items.splice(i, 1);
+                    continue;
+                }
+
+                // Off screen
+                if (it.y > canvas.height + 20) {
+                    items.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        function startGame() {
+            resetGame();
+            gameRunning = true;
+            startBtn.style.display = 'none';
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timeEl.textContent = timeLeft;
+                if (Math.random() > 0.4) spawnItem();
+
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+
+            // Frequent item drops
+            const dropInterval = setInterval(() => {
+                if (!gameRunning) { clearInterval(dropInterval); return; }
+                spawnItem();
+            }, 700);
+
+            requestAnimationFrame(update);
+        }
+
+        function endGame() {
+            gameRunning = false;
+            clearInterval(timerInterval);
+            startBtn.style.display = 'inline-block';
+            startBtn.textContent = 'PLAY AGAIN ✦';
+
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('yasmin_best_score', bestScore);
+                bestEl.textContent = bestScore;
+            }
+
+            ctx.fillStyle = 'rgba(7, 20, 33, 0.85)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ff6a00';
+            ctx.font = '36px Bangers, cursive';
+            ctx.textAlign = 'center';
+            ctx.fillText('TIME UP!', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '20px Inter, sans-serif';
+            ctx.fillText(`Your Creative Score: ${score}`, canvas.width / 2, canvas.height / 2 + 20);
+        }
+
+        startBtn.addEventListener('click', startGame);
+
+        function setPlayerX(clientX) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            let targetX = (clientX - rect.left) * scaleX - player.width / 2;
+            player.x = Math.max(0, Math.min(canvas.width - player.width, targetX));
+        }
+
+        canvas.addEventListener('mousemove', e => {
+            if (gameRunning) setPlayerX(e.clientX);
+        });
+
+        canvas.addEventListener('touchmove', e => {
+            if (gameRunning && e.touches.length > 0) {
+                setPlayerX(e.touches[0].clientX);
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        window.addEventListener('keydown', e => {
+            if (!gameRunning) return;
+            if (e.key === 'ArrowLeft') player.x = Math.max(0, player.x - 25);
+            if (e.key === 'ArrowRight') player.x = Math.min(canvas.width - player.width, player.x + 25);
+        });
+
+        // Initial canvas screen
+        ctx.fillStyle = '#071421';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ff6a00';
+        ctx.font = '32px Bangers, cursive';
+        ctx.textAlign = 'center';
+        ctx.fillText('PRESS START TO PLAY ✦', canvas.width / 2, canvas.height / 2);
+
+        // Mobile menu toggle
+        const menuBtn = document.querySelector('.menu-btn');
+        const navLinks = document.querySelector('.nav-links');
+        if (menuBtn && navLinks) {
+            menuBtn.addEventListener('click', () => {
+                const open = navLinks.classList.toggle('mobile-open');
+                menuBtn.textContent = open ? '×' : '☰';
+            });
+        }
+    </script>
+</body>
+</html>
