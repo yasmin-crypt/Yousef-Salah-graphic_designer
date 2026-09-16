@@ -1,15 +1,17 @@
 /* Portfolio projects data definition (with offline file:// protocol support) */
 window.PORTFOLIO_PROJECTS = [
   {
-    "id": 1,
-    "name": "ONYX",
-    "title": "ONYX",
-    "desc": "Brand Identity",
-    "category": "Branding",
+        "id": 1,
+    "name": "مطعم بنت البلد",
+"title": "مطعم بنت البلد",
+"desc": "Restaurant Branding",
+"category": "Branding",
     "image": "assets/projects/1/cover.jpeg",
     "cover": "assets/projects/1/cover.jpeg",
-    "description": "A complete brand identity concept exploring composition, typography, visual hierarchy and a consistent brand personality.",
+    "description": "A distinctive restaurant brand identity combining elegant typography, refined visuals, and a cohesive design system that reflects the character of ONYX.",
     "tools": [
+      "Photoshop",
+      "Illustrator",
       "Photoshop",
       "Illustrator"
     ],
